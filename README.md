@@ -97,6 +97,38 @@ Please do that before using the tool.
     - Incorporate this into your ~/.rshrc `export PATH="/opt/homebrew/share/google-cloud-sdk/bin:$PATH"`
     - Run `gcloud init` to login
 
+- For a writable image registry (required for the test-client and data-generator images)
+
+  The demo deploys two kinds of derived container images that aren't published to any public registry: the **test client** (one per GridGain major version) and the **data generator** (one per GridGain major version). The plugin's image-bootstrap wizard builds these locally with jib and pushes them to a registry **you control**, then references them from your `demo-config.yaml`. Kubernetes pulls them at cluster-deploy time, so the registry must be publicly readable.
+
+  The simplest option is **GitHub Container Registry** (GHCR), which gives every GitHub user a personal namespace at `ghcr.io/<your-github-username>`. The setup is a one-time, ~5-minute task.
+
+    - **Mint a Personal Access Token (PAT).** Visit https://github.com/settings/tokens → **Generate new token (classic)**.
+        - Note: `gridgain demo wizard`
+        - Expiration: pick a sensible duration (e.g., 90 days)
+        - Scopes: check exactly **`write:packages`** (it auto-checks `read:packages`). No other scopes.
+        - Click **Generate token** and **copy the value immediately** (`ghp_…`) — GitHub won't show it again.
+
+    - **Verify the PAT (optional but recommended).**
+        ```bash
+        echo "$GHCR_PAT" | docker login ghcr.io -u <your-github-username> --password-stdin
+        # Expected: Login Succeeded
+        ```
+        If this fails, don't proceed — the wizard's connectivity test would surface the same failure later.
+
+    - **Export the PAT in the shell that will launch the demo UI.** The plugin reads it via `System.getenv("GHCR_PAT")` at push time, so it must be present in the JVM's environment.
+        ```bash
+        export GHCR_PAT=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        ```
+        For persistence across terminal sessions, add the `export` line to `~/.zshrc` (or your shell's rc) and `source` it.
+
+    - **Make the published packages public after the wizard pushes them** (one-time, per package). When jib first pushes to GHCR it creates the packages as **private**; the wizard's `auth.credentials.kind: anonymous` default assumes they're public, so Kubernetes pulls would otherwise fail with `ImagePullBackOff`. After the wizard's Phase 2 completes:
+        1. Visit `https://github.com/users/<your-github-username>/packages/container/<package-name>/settings`
+        2. **Danger Zone** → **Change package visibility** → **Public** → confirm.
+        Four packages will need this flip on first run: `demo-test-client-gg8`, `demo-test-client-gg9`, `gridgain-data-generator-gg8`, `gridgain-data-generator-gg9`. Subsequent pushes inherit the public visibility.
+
+  GitHub Packages, GCP Artifact Registry, and any other publicly-readable / write-authenticated registry will also work — the wizard's form supports an `env-var token` mode (GHCR / Docker Hub / Quay) and a `GCP Artifact Registry via infrastructure_account` mode.
+
 ## Starting a new project using the template
 
 
