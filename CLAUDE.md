@@ -9,6 +9,25 @@ and related infrastructure.
 This project does **not** contain plugin source code — all custom Gradle tasks come from the
 `gridgain-demo-gradle-plugin` resolved via Maven. Do not add bespoke Gradle tasks here.
 
+## Using the toolkit — read the skills
+
+The toolkit ships two usage skills that document how to deploy/tear down elements, edit
+`demo-config.yaml`, choose plugin tasks, and run the data generator — including non-obvious behavior
+you'd otherwise rediscover the hard way (e.g. `dataGenerate` has no rate-override property; multi-pod
+generator rate is per-pod, so total ≈ rate × pods).
+
+This template consumes the plugin/generator from Maven and has **no sibling repos**, so read the
+skills from their canonical location on GitHub (fetch the raw form to read them in-session):
+
+- **Toolkit (plugin tasks, element types, generator dispatch):**
+  `https://github.com/GridGain-Demos/gridgain-demo-gradle-plugin/blob/main/.claude/skills/gridgain-demo-toolkit/SKILL.md`
+- **Data generator (ops.yaml/data.yaml config + semantics):**
+  `https://github.com/GridGain-Demos/gridgain-demo-data-generator/blob/main/.claude/skills/gridgain-demo-data-generator/SKILL.md`
+
+Those skills are the source of truth and are kept current in their own repos — don't copy them here
+(a local copy would drift). When working inside the full toolkit workspace (sibling repos present),
+they also auto-load from each repo's `.claude/skills/`.
+
 ## Build setup
 
 - **Java 17** required (enforced via Gradle toolchain). Kotlin DSL throughout.
